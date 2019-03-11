@@ -1,0 +1,35 @@
+{
+    "feature":[ 
+        {"name": "sBP", "file_name": "vitals/bp.csv", "feature_type": "vital"},
+        {"name": "rr", "file_name": "vitals/rr.csv", "feature_type": "vital"},
+        {"name": "wbc", "file_name": "CBC_Coag_Chemo/cbc.csv", "feature_type": "labo"},
+        {"name": "magnesium", "file_name": "CBC_Coag_Chemo/chemo.csv", "feature_type": "labo"}
+    ],
+
+    "Vital_setting":{
+        "n_timepoints" : 6,
+        "n_timepoints_per_day" : 3,
+        "n_offset_timepoints" : 1,
+        "NA_methods" : "Imputation",
+        "NA_breaks" : []
+    },
+
+    "Labo_setting":{
+        "n_timepoints" : 2,
+        "n_timepoints_per_day" : 1,
+        "n_offset_timepoints" : 0,
+        "NA_methods" : "Imputation",
+        "NA_breaks" : []
+    },
+
+    "model_param":{},
+
+    "learning_param":{
+        "pos_train_ratio" : 0.8,
+        "neg_train_ratio" : 1.0,
+        "neg_test_ratio" : 10.0,
+        "n_models" : 10,
+        "csv_root" : "/Users/liyuanxu/Dropbox/automet/data/train/"
+    }
+
+}
