@@ -2,7 +2,7 @@
     "feature":[ 
         {"name": "sBP", "file_name": "vitals/bp.csv", "feature_type": "vital"},
         {"name": "rr", "file_name": "vitals/rr.csv", "feature_type": "vital"},
-        {"name": "wbc", "file_name": "CBC_Coag_Chemo/cbc.csv", "feature_type": "labo"},
+        {"name": "wbc", "file_name": "CBC_Coag_Chemo/cbc.csv", "feature_type": "labo", "NA_methods": "Categorical", "NA_breaks":[10,20,30,100]},
         {"name": "magnesium", "file_name": "CBC_Coag_Chemo/chemo.csv", "feature_type": "labo"}
     ],
 
@@ -29,7 +29,8 @@
         "neg_train_ratio" : 1.0,
         "neg_test_ratio" : 10.0,
         "n_models" : 10,
-        "csv_root" : "/Users/liyuanxu/Dropbox/automet/data/train/"
+        "csv_root" : "/Users/liyuanxu/Dropbox/automet/data/train_190312/",
+        "n_target_timepoints_per_day": 3
     }
 
 }
