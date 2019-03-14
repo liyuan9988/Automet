@@ -5,8 +5,8 @@ import numpy as np
 
 class DataLoader:
 
-    def __init__(self, params):
-        self.csv_root = params["learning_param"]["csv_root"]
+    def __init__(self, params, csv_path):
+        self.csv_root = csv_path
         self.file_list = ["vitals/bp.csv",
                           "vitals/hr.csv",
                           "vitals/rr.csv",
@@ -15,7 +15,7 @@ class DataLoader:
                           "vitals/urine.csv",
                           "CBC_Coag_Chemo/cbc.csv",
                           "CBC_Coag_Chemo/coag.csv",
-                          "CBC_Coag_Chemo/Chemo.csv"
+                          "CBC_Coag_Chemo/chemo.csv"
                           ]
         self.table_dict = dict()
         for file in self.file_list:
@@ -35,6 +35,6 @@ if __name__ == "__main__":
     import json
     with open("./config.json", "r") as f:
         config = json.load(f)
-    loader = DataLoader(config)
+    loader = DataLoader(config, config["learning_param"]["train_csv_root"])
     print(loader["vitals/urine.csv"])
         

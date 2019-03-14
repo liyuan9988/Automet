@@ -16,6 +16,7 @@ class FeatureBuilder:
         else:
             print("Invalid Feature Type %s"%self.feature_type)
             raise ValueError
+        
         self.n_timepoints = ind_param.get("n_timepoints", default["n_timepoints"])
         self.n_timepoints_per_day = ind_param.get("n_timepoints_per_day", default["n_timepoints_per_day"])
         self.n_offset_timepoints = ind_param.get("n_offset_timepoints",default["n_offset_timepoints"])
@@ -23,14 +24,6 @@ class FeatureBuilder:
         self.na_breaks =  ind_param.get("NA_breaks",default["NA_methods"])
         self.n_target_timepoints_per_day = org_params["learning_param"]["n_target_timepoints_per_day"]
         self.table = data_loader[self.file_name]
-
-
-    def cal_date_and_timepoint(self, date, timepoint, diff_timepoint):
-        final_time = timepoint + diff_timepoint
-        diff_date = final_time // self.n_timepoints_per_day
-        final_time = final_time % self.n_timepoints_per_day
-        finalDate = date + pd.to_timedelta("%sday"%diff_date)
-        return finalDate, final_time
 
     def cal_timepoint_diff(self, s_date, s_time, e_date, e_time):
         diff = (e_date - s_date).dt.days.values
@@ -61,9 +54,9 @@ class FeatureBuilder:
         res = np.empty((idx_table.shape[0], self.n_timepoints))
         res[:] = np.nan
         for i in range(idx_table.shape[0]):
-            id_hashed = idx_table["id_hashed"][i]
-            target_date = idx_table["target_date"][i]
-            timepoint = idx_table["timepoint"][i]
+            id_hashed = idx_table["id_hashed"].values[i]
+            target_date = idx_table["target_date"].values[i]
+            timepoint = idx_table["timepoint"].values[i]
             sub_table, t_diff = self.lookup_subtable(id_hashed,target_date,timepoint)
             col_id = -(t_diff-self.n_offset_timepoints)-1
             res[i,col_id] = sub_table.values
@@ -95,7 +88,7 @@ class FeatureBuilder:
     
     def fill_na_cat(self, table):
         nRow, nCol = table.shape
-        nData =  nRow* nCol
+        nData =  nRow * nCol
         binned_data = pd.cut(table.reshape(nData), bins = self.na_breaks)
         return binned_data.codes.reshape(nRow, nCol)
 
@@ -104,7 +97,7 @@ if __name__ == "__main__":
     import json
     with open("./config.json", "r") as f:
         config = json.load(f)
-    loader = DataLoader(config)
+    loader = DataLoader(config, config["learning_param"]["train_csv_root"])
     ind0 = config["feature"][0]
     ind1 = config["feature"][2]
     fb = FeatureBuilder(ind0, config, loader)
