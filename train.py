@@ -10,6 +10,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import train_test_split
 import click
 import json
+import os
 #load data
 
 def train_one(config,train_loader, train_handler, X_test, y_test, rand_seed):
@@ -35,13 +36,12 @@ def train_one(config,train_loader, train_handler, X_test, y_test, rand_seed):
 @click.option('--nParallel', '-t', default=1)
 def train(config_name, nparallel):
     with open(config_name, "r") as f:
-        config = json.load(f)
-    
+        config = json.load(f)    
     train_loader = DataLoader(config, config["learning_param"]["train_csv_root"])
     train_handler = DataHandler(train_loader,config)
     test_loader = DataLoader(config, config["learning_param"]["test_csv_root"])
     test_handler = DataHandler(test_loader,config)
-    X_test,y_test = test_handler.build_dataset(n_negative=10000)
+    X_test,y_test = test_handler.build_dataset(100.0)
     n_repeat = config["learning_param"]["n_repeat"]
     with Pool(processes=nparallel) as p:
         multiple_results = [p.apply_async(train_one, (config,train_loader, train_handler, X_test, y_test, i)) for i in range(n_repeat)]
@@ -49,7 +49,7 @@ def train(config_name, nparallel):
     config["mean_auc"] = np.mean(res)
     config["var_auc"] = np.var(res)
     
-    with open(config_name+".res.json", "w") as f:
+    with open(config_name[:-5]+".res.json", "w") as f:
         json.dump(config, f)
      
     

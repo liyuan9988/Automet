@@ -23,6 +23,10 @@ class FeatureBuilder:
         self.na_methods = ind_param.get("NA_methods",default["NA_methods"])
         self.na_breaks =  ind_param.get("NA_breaks",default["NA_methods"])
         self.n_target_timepoints_per_day = org_params["learning_param"]["n_target_timepoints_per_day"]
+        if(self.na_methods == "Imputation"):
+            self.search_for_imputation = ind_param.get("search_for_imputation",default["search_for_imputation"])
+        else:
+            self.search_for_imputation = 0
         self.table = data_loader[self.file_name]
 
     def cal_timepoint_diff(self, s_date, s_time, e_date, e_time):
@@ -43,7 +47,7 @@ class FeatureBuilder:
             t_diff = self.cal_timepoint_diff(sub_table["date_Einstein"], sub_table["timepoint"],target_day, target_time)
         else:
             t_diff = self.cal_timepoint_diff(sub_table["date_Einstein"], 1,target_day, target_time)
-        flgs = (t_diff < self.n_timepoints + self.n_offset_timepoints) 
+        flgs = (t_diff < self.n_timepoints + self.n_offset_timepoints + self.search_for_imputation) 
         flgs = np.logical_and(flgs,t_diff >= self.n_offset_timepoints)
         sub_table = sub_table.loc[flgs,self.name]
         t_diff = t_diff[flgs]
@@ -51,7 +55,7 @@ class FeatureBuilder:
 
     #idx_table.columns = [id_hashed, target_day, target_time]
     def query_table(self, idx_table, res = None):
-        res = np.empty((idx_table.shape[0], self.n_timepoints))
+        res = np.empty((idx_table.shape[0], self.n_timepoints+ self.search_for_imputation))
         res[:] = np.nan
         for i in range(idx_table.shape[0]):
             id_hashed = idx_table["id_hashed"].values[i]
@@ -81,7 +85,7 @@ class FeatureBuilder:
             flg = np.logical_not(np.isnan(table[:,i]))
             tmp[flg] = table[flg,i] 
             table[:,i]  =  tmp
-        return table
+        return table[:,self.search_for_imputation:]
 
     def fill_na_binary(self,table):
         return np.array(np.isnan(table), dtype=int, copy = False)
@@ -99,7 +103,7 @@ if __name__ == "__main__":
         config = json.load(f)
     loader = DataLoader(config, config["learning_param"]["train_csv_root"])
     ind0 = config["feature"][0]
-    ind1 = config["feature"][2]
+    ind1 = config["feature"][7]
     fb = FeatureBuilder(ind0, config, loader)
     fb1 = FeatureBuilder(ind1, config, loader)
     print(fb.n_target_timepoints_per_day)
