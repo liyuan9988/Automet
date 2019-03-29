@@ -19,8 +19,9 @@ class DataHandler:
 
     def bulid_target_table(self):
         path = self.dataloader.csv_root
-        self.seisitsu = SeisitsuLoader(path+"seishitu_codeblue_wo_future.csv")  
-        self.target_table = pd.read_csv(path+"seishitu_codeblue_wo_future.csv")
+        file_name = self.config["learning_param"].get("target_table_file", "seishitu_codeblue_wo_future_small.csv")
+        self.seisitsu = SeisitsuLoader(path+file_name)  
+        self.target_table = pd.read_csv(path+file_name)
         self.target_table["enter_Einstein"] = pd.to_datetime(self.target_table["enter_Einstein"])
         self.target_table["discharge_Einstein"] = pd.to_datetime(self.target_table["discharge_Einstein"])
         self.target_table["date_codeB"] = pd.to_datetime(self.target_table["date_codeB"])
@@ -102,7 +103,7 @@ class DataHandler:
 
     def build_dataset(self, n_neg_train_ratio=1.0):
         n_positive = self.CPA_table.shape[0]
-        n_negative = n_positive * n_neg_train_ratio
+        n_negative = int(n_positive * n_neg_train_ratio)
         y = np.concatenate([np.ones(n_positive),np.zeros(n_negative)],axis=0)
         neg_id = self.sample_negative_CPA(n_negative)
         all_id = pd.concat([self.CPA_table, neg_id],axis=0)
