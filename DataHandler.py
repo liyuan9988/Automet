@@ -19,7 +19,7 @@ class DataHandler:
 
     def bulid_target_table(self):
         path = self.dataloader.csv_root
-        file_name = self.config["learning_param"].get("target_table_file", "seishitu_codeblue_wo_future_small.csv")
+        file_name = self.config["learning_param"].get("target_table_file", "seishitu_codeblue_wo_future.csv")
         self.seisitsu = SeisitsuLoader(path+file_name)  
         self.target_table = pd.read_csv(path+file_name)
         self.target_table["enter_Einstein"] = pd.to_datetime(self.target_table["enter_Einstein"])
@@ -70,10 +70,11 @@ class DataHandler:
             return True
 
     #get n samples of Non-CPA data (table with id_hashed, data_codeB)
-    def sample_negative_CPA(self, n):
+    def sample_negative_CPA(self, n, return_id_list=False):
         id_hashed = []
         target_date = []
         timepoint = []
+        idx_list = []
         duration = np.empty(self.target_table.shape[0],dtype=int)
         for i in range(self.target_table.shape[0]):
             start = self.target_table["enter_Einstein"].iloc[i]
@@ -91,6 +92,10 @@ class DataHandler:
                 id_hashed.append(id_hashed_candi)
                 target_date.append(date)
                 timepoint.append(timepoint_candi)
+                idx_list.append(idx)
+        if(return_id_list):
+            return pd.DataFrame({"id_hashed":id_hashed, "target_date":target_date,
+                            "timepoint":timepoint}),  idx_list
         return pd.DataFrame({"id_hashed":id_hashed, "target_date":target_date,
                             "timepoint":timepoint})
     

@@ -72,6 +72,7 @@
         "test_csv_root" : "/Users/liyuanxu/Dropbox/automet/data/test_190312/",
         "target_table_file" : "seishitu_codeblue_wo_future_small.csv",
         "n_target_timepoints_per_day": 3,
-        "max_target_timepoint_gap": 1
+        "max_target_timepoint_gap": 1,
+        "eval_key": "MedSurg"
     }
 }
