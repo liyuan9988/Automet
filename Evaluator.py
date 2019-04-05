@@ -11,14 +11,25 @@ class Evaluator:
         self.test_loader = test_loader
         self.test_handler = test_handler
 
-    def build_dataset(self,negative_ratio):
+    def build_dataset(self,negative_ratio, nprocess=1):
         key = self.config["learning_param"].get("eval_key", "all")
+        n_positive = self.test_handler.CPA_table.shape[0]
+        n_negative = int(n_positive * negative_ratio)
+        print("n_negative = %d"%n_negative)
         if(key == "MedSurg"):
-            self.build_dataset_for_MedSurg(negative_ratio)
+            self.build_dataset_for_MedSurg(negative_ratio, nprocess)
+        elif(key == "ICU"):
+            self.build_dataset_for_ICU(negative_ratio, nprocess)
         else:
-            self. build_dataset_for_all(negative_ratio)
+            self.build_dataset_for_all(negative_ratio, nprocess)
 
-    def build_dataset_for_MedSurg(self, negative_ratio):
+    def build_dataset_for_ICU(self, negative_ratio, nprocess):
+        n_positive = self.test_handler.CPA_table.shape[0]
+        n_negative = int(n_positive * negative_ratio)
+        NonCPA_target, row_id = self.test_handler.sample_negative_CPA(n_negative,True)
+        
+
+    def build_dataset_for_MedSurg(self, negative_ratio, nprocess):
         n_positive = self.test_handler.CPA_table.shape[0]
         n_negative = int(n_positive * negative_ratio)
         NonCPA_target, row_id = self.test_handler.sample_negative_CPA(n_negative,True)
@@ -33,7 +44,7 @@ class Evaluator:
         med_n_pos = MedCPA.shape[0]
         med_n_neg = MedNonCPA.shape[0]
         med_y = np.concatenate([np.ones(med_n_pos),np.zeros(med_n_neg)],axis=0)
-        med_X = self.test_handler.load_feature(pd.concat([MedCPA, MedNonCPA],axis=0))
+        med_X = self.test_handler.load_feature(pd.concat([MedCPA, MedNonCPA],axis=0), nprocess)
 
         #compile_Surg
         SurgCPA = self.test_handler.CPA_table.loc[pos_MedSurg == "surgery", :]
@@ -41,13 +52,13 @@ class Evaluator:
         surg_n_pos = SurgCPA.shape[0]
         surg_n_neg = SurgNonCPA.shape[0]
         surg_y = np.concatenate([np.ones(surg_n_pos),np.zeros(surg_n_neg)],axis=0)
-        surg_X = self.test_handler.load_feature(pd.concat([SurgCPA, SurgNonCPA],axis=0))
+        surg_X = self.test_handler.load_feature(pd.concat([SurgCPA, SurgNonCPA],axis=0), nprocess)
 
         self.data_list = [(med_X, med_y), (surg_X, surg_y)]
 
 
-    def build_dataset_for_all(self, negative_ratio):
-        X_test,y_test = self.test_handler.build_dataset(negative_ratio)
+    def build_dataset_for_all(self, negative_ratio, nprocess):
+        X_test,y_test = self.test_handler.build_dataset(negative_ratio, nprocess)
         self.data_list = [(X_test, y_test)]
         print(y_test)
         
@@ -65,7 +76,7 @@ class Evaluator:
         n_nonCPA = np.sum(1-y_test)
         fpr, tpr, therehsolds = roc_curve(y_test, y_score)
         auc_score = auc(fpr, tpr)
-        idx = np.argmax(fpr+tpr)
+        idx = np.argmax(tpr - fpr)
         youden_index = therehsolds[idx]
         tp = np.sum(y_test[y_score > youden_index])
         fp = np.sum(1.0 - y_test[y_score > youden_index])
@@ -77,6 +88,6 @@ class Evaluator:
         sensitivity = tp /  (tp + fn)
         specificity =   tn / (tn + fp)
         f_val = (2.0*tp) / (2.0*tp + fp + fn)
-        res = np.array([nData, nCPA, n_nonCPA, accuracy, PPV, NPV, sensitivity, specificity, f_val, auc_score])
+        res = np.array([nData, nCPA, n_nonCPA, accuracy, PPV, NPV, sensitivity, specificity, f_val, auc_score, youden_index, tp, fp, fn, tn])
         return res 
 

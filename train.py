@@ -14,7 +14,7 @@ import json
 import os
 #load data
 
-def train_one(config,train_loader, train_handler, evaluator, rand_seed):
+def train_one(config,train_loader, train_handler, rand_seed):
     model_list = []
     np.random.seed(rand_seed)
     for i in range(config["learning_param"]["n_models"]):
@@ -23,24 +23,28 @@ def train_one(config,train_loader, train_handler, evaluator, rand_seed):
         mdl = RandomForestClassifier(**config["model_param"])
         model_list.append(mdl.fit(X,y))
 
-    return evaluator.evaluate(model_list)    
+    return model_list
     
 @click.command()
 @click.argument("config_name")
 @click.option('--nParallel', '-t', default=1)
 def train(config_name, nparallel):
     with open(config_name, "r") as f:
-        config = json.load(f)    
-    train_loader = DataLoader(config, config["learning_param"]["train_csv_root"])
-    train_handler = DataHandler(train_loader,config)
+        config = json.load(f)   
+    train_csv_root =  config["learning_param"]["train_csv_root"]
+    train_target_table = config["learning_param"].get("train_target_table_file", "seishitu_codeblue_wo_future.csv")
+    train_loader = DataLoader(config, train_csv_root)
+    train_handler = DataHandler(train_loader,config, train_target_table)
     test_loader = DataLoader(config, config["learning_param"]["test_csv_root"])
-    test_handler = DataHandler(test_loader,config)
+    test_target_table = config["learning_param"].get("test_target_table_file", "seishitu_codeblue_wo_future.csv")
+    test_handler = DataHandler(test_loader,config,test_target_table)
     evaluator = Evaluator(config, test_loader, test_handler)
-    evaluator.build_dataset(100.0)
+    print("building_test_data")
+    evaluator.build_dataset(1.0, nparallel)
     n_repeat = config["learning_param"]["n_repeat"]
     with Pool(processes=nparallel) as p:
-        multiple_results = [p.apply_async(train_one, (config,train_loader, train_handler, evaluator, i)) for i in range(n_repeat)]
-        res = np.array([tmp.get() for tmp in multiple_results])
+        models = [p.apply_async(train_one, (config, train_loader, train_handler, i)) for i in range(n_repeat)]
+        res = np.array([evaluator.evaluate(model.get()) for model in models])
     
     averages = np.mean(res, axis = 0, keepdims=False)
     variances = np.var(res, axis = 0, keepdims=False)
@@ -65,7 +69,17 @@ def train(config_name, nparallel):
     config["results"]["f_val_var"] = list(variances[:,8])
     config["results"]["auc_score_mean"] = list(averages[:,9])
     config["results"]["auc_score_var"] = list(variances[:,9])
-    
+    config["results"]["youden_index_mean"] = list(averages[:,10])
+    config["results"]["youden_index_var"] = list(variances[:,10])
+    config["results"]["tp_mean"] = list(averages[:,11])
+    config["results"]["tp_var"] = list(variances[:,11])
+    config["results"]["fp_mean"] = list(averages[:,12])
+    config["results"]["fp_var"] = list(variances[:,12])
+    config["results"]["fn_mean"] = list(averages[:,13])
+    config["results"]["fn_var"] = list(variances[:,13])
+    config["results"]["tn_mean"] = list(averages[:,14])
+    config["results"]["tn_var"] = list(variances[:,14])
+
     
     
     with open(config_name[:-5]+".res.json", "w") as f:

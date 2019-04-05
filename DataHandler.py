@@ -2,15 +2,20 @@ import numpy as np
 import pandas as pd
 from FeatureBuilder import FeatureBuilder
 from SeisitsuLoader import SeisitsuLoader
+from multiprocessing import Pool
+
+def _call(builder, table):
+    return builder.query_table(table)
 
 class DataHandler:
 
-    def __init__(self, dataloader, config):
+    def __init__(self, dataloader, config, target_file_name):
         self.config = config
-        self.dataloader = dataloader  
+        self.dataloader = dataloader 
+        self.target_file_name = target_file_name 
         self.build_feature_builders()
         self.bulid_target_table() 
-
+        
     def build_feature_builders(self):
         self.feature_list = []
         for feature_opt in self.config["feature"]:
@@ -19,9 +24,8 @@ class DataHandler:
 
     def bulid_target_table(self):
         path = self.dataloader.csv_root
-        file_name = self.config["learning_param"].get("target_table_file", "seishitu_codeblue_wo_future.csv")
-        self.seisitsu = SeisitsuLoader(path+file_name)  
-        self.target_table = pd.read_csv(path+file_name)
+        self.seisitsu = SeisitsuLoader(path+self.target_file_name)  
+        self.target_table = pd.read_csv(path+self.target_file_name)
         self.target_table["enter_Einstein"] = pd.to_datetime(self.target_table["enter_Einstein"])
         self.target_table["discharge_Einstein"] = pd.to_datetime(self.target_table["discharge_Einstein"])
         self.target_table["date_codeB"] = pd.to_datetime(self.target_table["date_codeB"])
@@ -99,20 +103,26 @@ class DataHandler:
         return pd.DataFrame({"id_hashed":id_hashed, "target_date":target_date,
                             "timepoint":timepoint})
     
-    def load_feature(self, table):
+    def load_feature(self, table, nprocess = 1):
         res = []
         res.append(self.seisitsu.query_all(table["id_hashed"],table["target_date"]))
-        for builder in self.feature_list:
-            res.append(builder.query_table(table))
+        if(nprocess == 1):
+            for builder in self.feature_list:
+                res.append(builder.query_table(table))
+                print(builder.name)
+        else:
+            with Pool(processes=nprocess) as p:
+                res += p.starmap(_call, [(builder,table) for builder in self.feature_list])
+                
         return np.concatenate(res,axis=1)
 
-    def build_dataset(self, n_neg_train_ratio=1.0):
+    def build_dataset(self, n_neg_train_ratio=1.0, nprocess = 1):
         n_positive = self.CPA_table.shape[0]
         n_negative = int(n_positive * n_neg_train_ratio)
         y = np.concatenate([np.ones(n_positive),np.zeros(n_negative)],axis=0)
         neg_id = self.sample_negative_CPA(n_negative)
         all_id = pd.concat([self.CPA_table, neg_id],axis=0)
-        X = self.load_feature(all_id)
+        X = self.load_feature(all_id, nprocess)
         return X, y
     
 if __name__ == "__main__":
