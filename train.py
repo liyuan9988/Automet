@@ -40,7 +40,7 @@ def train(config_name, nparallel):
     test_handler = DataHandler(test_loader,config,test_target_table)
     evaluator = Evaluator(config, test_loader, test_handler)
     print("building_test_data")
-    evaluator.build_dataset(1.0, nparallel)
+    evaluator.build_dataset(100.0, nparallel)
     n_repeat = config["learning_param"]["n_repeat"]
     with Pool(processes=nparallel) as p:
         models = [p.apply_async(train_one, (config, train_loader, train_handler, i)) for i in range(n_repeat)]

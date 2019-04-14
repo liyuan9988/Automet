@@ -109,7 +109,6 @@ class DataHandler:
         if(nprocess == 1):
             for builder in self.feature_list:
                 res.append(builder.query_table(table))
-                print(builder.name)
         else:
             with Pool(processes=nprocess) as p:
                 res += p.starmap(_call, [(builder,table) for builder in self.feature_list])

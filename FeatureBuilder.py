@@ -48,7 +48,7 @@ class FeatureBuilder:
         else:
             t_diff = self.cal_timepoint_diff(sub_table["date_Einstein"], 1,target_day, target_time)
         flgs = (t_diff < self.n_timepoints + self.n_offset_timepoints + self.search_for_imputation) 
-        flgs = np.logical_and(flgs,t_diff >= self.n_offset_timepoints)
+        flgs = np.logical_and(flgs, t_diff >= self.n_offset_timepoints)
         sub_table = sub_table.loc[flgs,self.name]
         t_diff = t_diff[flgs]
         return sub_table, t_diff
