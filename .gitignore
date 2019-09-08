@@ -3,3 +3,4 @@
 *.ipynb
 *.npy
 config2
+.mypy_cache

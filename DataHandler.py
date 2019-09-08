@@ -105,6 +105,7 @@ class DataHandler:
     
     def load_feature(self, table, nprocess = 1):
         res = []
+        print(table.shape[0])
         res.append(self.seisitsu.query_all(table["id_hashed"],table["target_date"]))
         if(nprocess == 1):
             for builder in self.feature_list:

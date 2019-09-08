@@ -30,7 +30,8 @@ def train(config_name):
     with open(config_name, "r") as f:
         config = json.load(f)    
     train_loader = DataLoader(config, config["learning_param"]["train_csv_root"])
-    train_handler = DataHandler(train_loader,config)
+    train_target_table = config["learning_param"].get("train_target_table_file", "seishitu_codeblue_wo_future.csv")
+    train_handler = DataHandler(train_loader,config, train_target_table)
     importances = train_one(config,train_loader, train_handler, 42)
     np.save(config_name[:-5]+".feature_importances.npy", importances)     
     
