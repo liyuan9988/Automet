@@ -5,3 +5,4 @@
 config2
 .mypy_cache
 old_version
+*.json
