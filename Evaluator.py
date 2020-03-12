@@ -110,6 +110,12 @@ class Evaluator:
             res.append(self.cal_metrics(y_score, y_test))
         return np.array(res)
 
+    def predict(self, models, data_id=0):
+        X_test, y_test = self.data_list[data_id]
+        predict = np.array([mdl.predict_proba(X_test) for mdl in models])
+        predict = np.mean(predict, axis=0, keepdims=False)[:, 1]
+        return np.array([predict, y_test])
+
     def simulate_on_all_negative(self, models, data_folder, n_process=1):
         non_CPA_table = self.test_handler.get_negative_CPA()
         CPA_table = self.test_handler.CPA_table

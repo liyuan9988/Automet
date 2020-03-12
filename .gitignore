@@ -6,3 +6,4 @@ config2
 .mypy_cache
 old_version
 config_for_simulation
+config_for_prediction
